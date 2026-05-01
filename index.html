@@ -384,6 +384,8 @@ textarea:focus { border-color: var(--accent); }
       </div>
 
       <div class="action-row">
+        <button class="action-btn" onclick="nudgeTone('less')">− Less</button>
+        <button class="action-btn" onclick="nudgeTone('more')">+ More</button>
         <button class="action-btn" onclick="doRewrite()">↻ Retry</button>
         <button class="action-btn" onclick="clearAll()">✕ Clear</button>
       </div>
@@ -609,8 +611,22 @@ async function doRewrite() {
     input,
     '',
     isEmail
-      ? 'TASK: Polish this email. Fix punctuation and grammar. Remove any closing signature. Make it sound like someone who has their stuff together. Keep his directness — lead with the point. Do not add filler. Do not make it longer.'
-      : 'TASK: Defuse this text. Keep his voice exactly. Watch especially for one-word replies, flat shutdowns, and endings that could read as sarcastic. Minimal changes — only remove the shrapnel.',
+      ? `TASK: Rewrite this email. GOAL: protect the relationship AND still make the point. RULES IN ORDER:
+(1) BLAME — replace "you did X wrong" with impact language: "this left me in a tough spot" / "this created a real problem". Never attack character, only describe impact.
+(2) ABSOLUTES — remove "always" and "never" — replace with specific instances: "when this happens" not "you never do this".
+(3) DEFENSIVE DEFLECTIONS — if Jake is defending himself, add a brief acknowledgment first before the defense: "I hear you — and here is what I meant."
+(4) GRAMMAR — fix punctuation and grammar after the above. Do not use this as the main fix.
+(5) LENGTH — do NOT make it longer. Shorter is better. Do not pad to seem warmer.
+(6) GOAL — Jake should never "win" in the rewrite. The goal is to defuse, not to build a stronger case. Reframe around fixing the situation, not proving a point.
+BANNED: corporate tone, therapist language, excessive apology, making Jake sound weak or like he is backing down.`
+      : `TASK: Defuse this text. GOAL: protect the relationship AND still make the point. RULES IN ORDER:
+(1) BLAME — replace attacking words with impact language: "that left me in a tough spot" not "you dropped the ball". Never attack character.
+(2) ABSOLUTES — remove "always" and "never" — replace with specific: "when this happens" not "you never do this".
+(3) SHUTDOWNS — one-word replies like "No" and flat closers like "Got it. Won't do it again." read as cold or sarcastic. Add just enough to signal you are still engaged: "No — here is what I meant" or "Understood, I will make sure that does not happen."
+(4) FLOODING RESPONSES — if the message sounds like Jake hit his limit ("I'm done", "can't be fixed", "not made for this world"), rewrite as a space request: "I need some time to process this. Can we talk later?"
+(5) DEFENSIVE DEFLECTIONS — if Jake is defending himself, acknowledge first: "I hear you — I did not mean it that way."
+(6) LENGTH — minimal changes. Do not pad. Do not make it sound like a therapy session.
+(7) GOAL — defuse, not win. Reframe around fixing the situation.`,
     '',
     'BANNED PHRASES — never use: "I hope this finds you well", "I wanted to reach out", "please do not hesitate", "I appreciate your patience", "as per my last email", "circling back", "going forward", "touch base", "per our conversation", "just checking in", "as discussed", "I am writing to", "kindly"',
     '',
@@ -657,6 +673,38 @@ async function doRewrite() {
   }
 
   setLoading(false);
+}
+
+function nudgeTone(direction) {
+  const current = document.getElementById('resultBody').textContent;
+  if (!current) return;
+  const input = document.getElementById('inputText').value.trim();
+  const recipient = document.getElementById('recipientInput').value.trim();
+  const nudgePrompt = direction === 'less'
+    ? 'The rewrite below is still too warm or formal. Dial it back — keep it closer to the original voice, less softening, more direct.'
+    : 'The rewrite below needs to be warmer and softer. More acknowledgment, more human, still sounds like Jake but gentler.';
+
+  setLoading(true);
+  fetch('/api/rewrite', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      prompt: nudgePrompt + '\n\nOriginal message: ' + input + '\n\nCurrent rewrite: ' + current + '\n\nRecipient: ' + (recipient || 'not specified') + '\n\nReturn JSON: { rewritten, changes: [], coaching: "" }',
+      apiKey: apiKey
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    setLoading(false);
+    const text = data.content?.map(b => b.text || '').join('') || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    showOutput(parsed);
+  })
+  .catch(err => {
+    setLoading(false);
+    alert('Error: ' + err.message);
+  });
 }
 
 function showOutput(parsed) {
