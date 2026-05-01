@@ -346,7 +346,8 @@ textarea:focus { border-color: var(--accent); }
   <div class="nav">
     <button class="nav-btn active" onclick="switchTab('write', this)">Write</button>
     <button class="nav-btn" onclick="switchTab('history', this)">History</button>
-    <button class="nav-btn" onclick="switchTab('settings', this)" style="margin-left:auto">⚙</button>
+    <button class="nav-btn" onclick="clearDraft()" style="margin-left:auto;color:var(--muted);border:1px solid var(--border)">Clear</button>
+    <button class="nav-btn" onclick="switchTab('settings', this)" style="margin-left:8px">⚙</button>
   </div>
 
   <!-- WRITE TAB -->
