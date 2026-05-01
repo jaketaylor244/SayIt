@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
 <title>SayIt</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { touch-action: pan-y; overscroll-behavior: none; }
 
 :root {
   --bg: #111110;
@@ -357,7 +358,8 @@ textarea:focus { border-color: var(--accent); }
 
     <textarea id="inputText" placeholder="Type or paste your message. Raw is fine — that's the point."></textarea>
 
-    <input class="context-input" id="recipientInput" placeholder="Who's this to? (e.g. my boss, a client, Marvin)" />
+    <input class="context-input" id="recipientInput" placeholder="Who is this to?" />
+    <input class="context-input" id="contextInput" placeholder="Context" />
 
     <button class="sayit-btn" id="sayitBtn" onclick="doRewrite()">
       <div class="spinner" id="spinner"></div>
@@ -443,13 +445,13 @@ function loadApiKey() {
 
 function setMode(m, btn) {
   mode = m;
-  document.querySelectorAll('.mode-toggle')[0].querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.parentElement.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
 
 function setIntensity(i, btn) {
   intensity = i;
-  document.querySelectorAll('.mode-toggle')[1].querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.parentElement.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
 
@@ -647,6 +649,20 @@ function timeAgo(ts) {
   if (h < 24) return h + 'h ago';
   return Math.floor(h / 24) + 'd ago';
 }
+</script>
+<script>
+  // Prevent double-tap zoom
+  let lastTap = 0;
+  document.addEventListener('touchend', function(e) {
+    const now = Date.now();
+    if (now - lastTap < 300) e.preventDefault();
+    lastTap = now;
+  }, { passive: false });
+
+  // Prevent pinch zoom
+  document.addEventListener('touchmove', function(e) {
+    if (e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
 </script>
 </body>
 </html>
