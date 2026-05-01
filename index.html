@@ -352,13 +352,11 @@ textarea:focus { border-color: var(--accent); }
   <!-- WRITE TAB -->
   <div class="tab active" id="tab-write">
     <div class="mode-row">
-      <button class="mode-btn active" onclick="setMode('email', this)">✉ Email</button>
-      <button class="mode-btn" onclick="setMode('text', this)">✆ Text</button>
+      <button class="mode-btn active" onclick="setMode('email', this)">Email</button>
+      <button class="mode-btn" onclick="setMode('text', this)">Text</button>
     </div>
 
     <textarea id="inputText" placeholder="Type or paste your message. Raw is fine — that's the point." oninput="autoExpandTextarea(this); updateWordCount()"></textarea>
-    <div id="wordCount" style="font-size:0.72rem;color:var(--dim);margin-top:4px">0 words</div>
-
 
     <input class="context-input" id="recipientInput" placeholder="Who is this to?" />
     <input class="context-input" id="contextInput" placeholder="Context" />
@@ -662,7 +660,15 @@ async function doRewrite() {
 }
 
 function showOutput(parsed) {
-  document.getElementById('resultBody').textContent = parsed.rewritten;
+  // Make sure we're on the write tab
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-write').classList.add('active');
+  document.querySelector('.nav-btn').classList.add('active');
+
+  const resultBody = document.getElementById('resultBody');
+  if (!resultBody) return;
+  resultBody.textContent = parsed.rewritten;
 
   const list = document.getElementById('changesList');
   list.innerHTML = (parsed.changes || []).map(c => `
