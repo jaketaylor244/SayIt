@@ -424,8 +424,8 @@ textarea:focus { border-color: var(--accent); }
   <!-- WRITE TAB -->
   <div class="tab active" id="tab-write">
     <div class="mode-row">
-      <button class="mode-btn active" onclick="setMode('email', this)">Email</button>
-      <button class="mode-btn" onclick="setMode('text', this)">Text</button>
+      <button class="mode-btn active" onclick="setMode('text', this)">Text</button>
+      <button class="mode-btn" onclick="setMode('email', this)">Email</button>
     </div>
 
     <textarea id="inputText" placeholder="Type or paste your message. Raw is fine — that's the point." oninput="autoExpandTextarea(this); updateWordCount()"></textarea>
@@ -512,7 +512,7 @@ textarea:focus { border-color: var(--accent); }
 </div>
 
 <script>
-let mode = 'email';
+let mode = 'text';
 let intensity = 'default';
 let lastRewrite = '';
 let history = [];
@@ -706,9 +706,10 @@ HARD RULES:
 - Never keep phrasing that sounds like a threat or ultimatum even in clean language
 - Remove ALL "you messed up / you failed / you dropped the ball" language — reframe as the situation, never the person
 - Remove "always" and "never" — replace with specific instances
-- Do not make it longer — shorter and warmer beats longer and formal
+- Keep it SHORT — long messages feel like lectures. Match or beat the original length. Never add sentences just to seem warmer.
 - Do not make Jake sound weak or like he is backing down — he can still be firm about the SITUATION
-- Goal is to open a conversation, not win an argument`
+- Goal is to open a conversation, not win an argument
+- GREETING RULE: Never start with just a name like "Brian," — cold and confrontational. If the original has a greeting, keep that style. If it starts with just a name, use "Hi [name]" — email is slightly more professional.`
       : `TASK: Defuse this text. The ONLY goal is to protect the relationship while still communicating the need.
 
 WHAT THIS MEANS IN PRACTICE:
@@ -724,9 +725,10 @@ HARD RULES:
 - Never keep any phrasing that sounds like an attack, threat, or ultimatum even in clean language
 - Remove ALL character attacks — reframe as situation/impact only
 - Remove "always" and "never"
-- Do NOT pad with extra sentences — warmer word choices beat longer messages
+- Keep it SHORT — match or beat the original length. Warmer word choices beat longer messages. Never add sentences just to seem warmer.
 - Goal is to open a conversation, not win an argument
-- Jake can still be firm about the SITUATION while being warm about the PERSON`,
+- Jake can still be firm about the SITUATION while being warm about the PERSON
+- GREETING RULE: Never start with just a name like "Brian," — cold and confrontational. If the original has a greeting, keep that style. If it starts with just a name, use "Hi [name]" — email is slightly more professional.`,
     '',
     'BANNED PHRASES — never use: "I hope this finds you well", "I wanted to reach out", "please do not hesitate", "I appreciate your patience", "as per my last email", "circling back", "going forward", "touch base", "per our conversation", "just checking in", "as discussed", "I am writing to", "kindly"',
     '',
