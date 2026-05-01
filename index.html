@@ -357,7 +357,7 @@ textarea:focus { border-color: var(--accent); }
       <button class="mode-btn" onclick="setMode('text', this)">✆ Text</button>
     </div>
 
-    <textarea id="inputText" placeholder="Type or paste your message. Raw is fine — that's the point."></textarea>
+    <textarea id="inputText" placeholder="Type or paste your message. Raw is fine — that's the point." oninput="autoExpandTextarea(this); updateWordCount()"></textarea>
 
     <input class="context-input" id="recipientInput" placeholder="Who is this to?" />
     <input class="context-input" id="contextInput" placeholder="Context" />
@@ -463,18 +463,18 @@ function autoExpandTextarea(textarea) {
 }
 
 function updateWordCount() {
-  const text = document.getElementById('messageInput').value.trim();
+  const text = document.getElementById('inputText').value.trim();
   const words = text ? text.split(/\s+/).length : 0;
   document.getElementById('wordCount').textContent = words + ' word' + (words !== 1 ? 's' : '');
 }
 
 function clearDraft() {
-  document.getElementById('messageInput').value = '';
+  document.getElementById('inputText').value = '';
   document.getElementById('recipientInput').value = '';
   document.getElementById('contextInput').value = '';
   document.getElementById('output').innerHTML = '';
   document.getElementById('wordCount').textContent = '0 words';
-  const ta = document.getElementById('messageInput');
+  const ta = document.getElementById('inputText');
   ta.style.height = 'auto';
   lastRewrite = '';
   window.scrollTo(0, 0);
@@ -611,12 +611,12 @@ function copyResult() {
 }
 
 function clearAll() {
-  document.getElementById('messageInput').value = '';
+  document.getElementById('inputText').value = '';
   document.getElementById('recipientInput').value = '';
   document.getElementById('contextInput').value = '';
   document.getElementById('output').innerHTML = '';
   document.getElementById('wordCount').textContent = '0 words';
-  document.getElementById('messageInput').style.height = 'auto';
+  document.getElementById('inputText').style.height = 'auto';
   lastRewrite = '';
   window.scrollTo(0, 0);
 }
