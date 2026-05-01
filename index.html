@@ -341,13 +341,12 @@ textarea:focus { border-color: var(--accent); }
 <body>
 <div class="container">
 
-  <div class="wordmark" onclick="clearDraft()" style="cursor:pointer">Say<span>It</span></div>
+  <div class="wordmark" onclick="clearAll()" style="cursor:pointer">Say<span>It</span></div>
 
   <div class="nav">
     <button class="nav-btn active" onclick="switchTab('write', this)">Write</button>
     <button class="nav-btn" onclick="switchTab('history', this)">History</button>
-    <button class="nav-btn" onclick="clearDraft()" style="margin-left:auto;color:var(--muted);border:1px solid var(--border)">Clear</button>
-    <button class="nav-btn" onclick="switchTab('settings', this)" style="margin-left:8px">⚙</button>
+    <button class="nav-btn" onclick="switchTab('settings', this)" style="margin-left:auto">⚙</button>
   </div>
 
   <!-- WRITE TAB -->
@@ -358,6 +357,7 @@ textarea:focus { border-color: var(--accent); }
     </div>
 
     <textarea id="inputText" placeholder="Type or paste your message. Raw is fine — that's the point." oninput="autoExpandTextarea(this); updateWordCount()"></textarea>
+
 
     <input class="context-input" id="recipientInput" placeholder="Who is this to?" />
     <input class="context-input" id="contextInput" placeholder="Context" />
@@ -411,6 +411,16 @@ textarea:focus { border-color: var(--accent); }
         <strong style="color:var(--text)">How it works:</strong><br>
         Your key stays on your phone. Only used to call the API. You control spending limits in your Anthropic console.
       </div>
+      <div style="border-top:1px solid var(--border);padding-top:14px">
+        <div class="section-label" style="margin-bottom:8px">People</div>
+        <div style="font-size:0.7rem;color:var(--dim);margin-bottom:10px;line-height:1.5">Add names and notes. When you fill in "Who is this to?", the AI uses this automatically.</div>
+        <div id="peopleList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="newPersonName" placeholder="Name" style="flex:1;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.9rem;color:var(--text)" />
+          <button onclick="addPerson()" style="padding:10px 16px;background:var(--accent);color:#1a0f00;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.9rem">Add</button>
+        </div>
+      </div>
+
       <button onclick="clearHistory()" style="padding:12px;background:transparent;border:1px solid #c97070;color:#c97070;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.9rem">Erase All History</button>
     </div>
   </div>
@@ -426,6 +436,60 @@ let apiKey = '';
 
 try { history = JSON.parse(localStorage.getItem('sayit_history') || '[]'); } catch(e) {}
 try { apiKey = localStorage.getItem('sayit_apikey') || ''; } catch(e) {}
+
+// People management
+let people = [];
+try { people = JSON.parse(localStorage.getItem('sayit_people') || '[]'); } catch(e) {}
+
+function savePeople() {
+  try { localStorage.setItem('sayit_people', JSON.stringify(people)); } catch(e) {}
+}
+
+function renderPeople() {
+  const list = document.getElementById('peopleList');
+  if (!list) return;
+  if (people.length === 0) {
+    list.innerHTML = '<div style="font-size:0.8rem;color:var(--dim)">No people added yet.</div>';
+    return;
+  }
+  list.innerHTML = people.map((p, i) => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <strong style="font-size:0.9rem;color:var(--text)">${p.name}</strong>
+        <button onclick="deletePerson(${i})" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:0.85rem">✕</button>
+      </div>
+      <textarea onchange="updatePersonNotes(${i}, this.value)" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:0.8rem;color:var(--text);resize:none;min-height:60px;font-family:inherit" placeholder="Notes about this person...">${p.notes || ''}</textarea>
+    </div>
+  `).join('');
+}
+
+function addPerson() {
+  const nameEl = document.getElementById('newPersonName');
+  const name = nameEl.value.trim();
+  if (!name) return;
+  people.push({ name, notes: '' });
+  savePeople();
+  nameEl.value = '';
+  renderPeople();
+}
+
+function deletePerson(i) {
+  people.splice(i, 1);
+  savePeople();
+  renderPeople();
+}
+
+function updatePersonNotes(i, notes) {
+  people[i].notes = notes;
+  savePeople();
+}
+
+function getPeopleContext(recipient) {
+  if (!recipient) return '';
+  const match = people.find(p => recipient.toLowerCase().includes(p.name.toLowerCase()));
+  if (!match) return '';
+  return match.notes ? match.name + ': ' + match.notes : '';
+}
 
 function saveApiKey() {
   const key = document.getElementById('apiKeyInput').value.trim();
@@ -465,7 +529,7 @@ function autoExpandTextarea(textarea) {
 function updateWordCount() {
   const text = document.getElementById('inputText').value.trim();
   const words = text ? text.split(/\s+/).length : 0;
-  document.getElementById('wordCount').textContent = words + ' word' + (words !== 1 ? 's' : '');
+  const _wc = document.getElementById('wordCount'); if(_wc) _wc.textContent = words + ' word' + (words !== 1 ? 's' : '');
 }
 
 function clearDraft() {
@@ -473,7 +537,7 @@ function clearDraft() {
   document.getElementById('recipientInput').value = '';
   document.getElementById('contextInput').value = '';
   document.getElementById('output').innerHTML = '';
-  document.getElementById('wordCount').textContent = '0 words';
+  const _wc = document.getElementById('wordCount'); if(_wc) _wc.textContent = '0 words';
   const ta = document.getElementById('inputText');
   ta.style.height = 'auto';
   lastRewrite = '';
@@ -495,7 +559,7 @@ function switchTab(name, btn) {
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
   if (name === 'history') renderHistory();
-  if (name === 'settings') loadApiKey();
+  if (name === 'settings') { loadApiKey(); renderPeople(); }
 }
 
 async function doRewrite() {
@@ -509,21 +573,46 @@ async function doRewrite() {
   setLoading(true);
   document.getElementById('output').classList.remove('show');
 
+  const context = document.getElementById('contextInput').value.trim();
+  const intensityGuide = intensity === 'less'
+    ? 'Make minimal changes — only defuse what could seriously blow up. Keep it as close to the original as possible.'
+    : intensity === 'more'
+    ? 'Go further in softening. Add warmth and acknowledgment while keeping his voice intact.'
+    : 'Standard rewrite — defuse the bluntness without overdoing it. Keep it real.';
+
   const prompt = [
     'ABOUT JAKE (the person whose messages you are editing):',
-    'Jake is direct, efficient, and genuinely cares about people but his brain moves faster than he can type so messages come out stripped down. He is not cold — he is just fast. He does not do small talk. He gets to the point. His natural style: short sentences, sometimes fragments, warm but not bubbly, says things like "all good", "brother", "thank you sir", uses "!" when he means it.',
+    'Jake is a painting estimator and project coordinator. Direct, efficient, genuinely cares but his brain moves faster than he can type so messages come out stripped down. He is not cold — he is fast. Does not do small talk. Gets to the point. Natural style: short sentences, sometimes fragments, warm but not bubbly. Says things like "all good", "brother", "thank you sir", uses "!" when he means it.',
+    '',
+    'JAKE'S KEY PATTERN TO WATCH: When Jake is frustrated AND right, his messages get shorter and flatter. The more correct he is, the more clipped he sounds. One-word replies ("No"), declarative shutdowns ("We are not doing that"), and sarcasm-adjacent endings ("Got it. Won't do it again.") are his biggest landmines. Fix these without making him sound weak or like he's backing down.',
+    '',
+    'PEOPLE JAKE MESSAGES (use this for context when recipient matches):',
+    'Marvin — Project manager. Consistently doesn't read scope of work, poor job management, gets defensive when confronted. Conversations get heated. Jake needs to be firm but not escalating.',
+    'Matt — Concrete coating manager. Similar to Marvin. Same communication problems.',
+    'Ismael — Waterproofing PM. Horrible communication and follow-through. Jake's main frustration is lack of accountability.',
+    'Sarah — Tech manager. Rough communicator, nobody likes working with her. Keep messages professional and short.',
+    'Brian — GM. Jake's boss (alongside his dad). Keep it professional and clear.',
+    'Mallory — CSR rep. Friendly working relationship.',
+    'Servando — CSR rep. Friendly working relationship.',
+    'Leslie — Residential scheduling manager. Keep it professional.',
+    'Dad — Jake's father and the boss. Complicated dynamic. Keep it respectful but direct.',
+    'Brother — Sales rep. Good relationship but occasional conflict. Keep it natural.',
+    'Katelyn — Jake's wife. Emotionally expressive, processes feelings out loud, needs acknowledgment before solutions. When Jake shuts down or goes flat in texts she reads it as not caring. Watch for nihilistic shutdowns ("I'm done", "can't be fixed"), cold acknowledgments ("Thanks for apologizing"), and defensive deflections ("That's my voice"). Soften without making Jake sound like he's collapsing or agreeing to things he doesn't mean.',
+    getPeopleContext(recipient) ? 'Additional notes on ' + recipient + ': ' + getPeopleContext(recipient) : '',
     '',
     'MODE: ' + (isEmail
       ? 'EMAIL — fix all punctuation, grammar, capitalization. Make it polished and confident. Remove any sign-off or signature at the end. Add one brief human touch only if it fits naturally. Professional but still clearly Jake — not corporate, not stiff.'
-      : 'TEXT — light touch only. Preserve his casual voice, punctuation, and capitalization. Only fix what could land wrong or start a fight.'),
+      : 'TEXT — light touch only. Preserve his casual voice, punctuation, and capitalization. Only fix what could land wrong or escalate a situation.'),
     'Recipient: ' + (recipient || 'not specified'),
+    context ? 'Additional context: ' + context : '',
+    'Intensity: ' + intensityGuide,
     '',
     'ORIGINAL (' + wordCount + ' words):',
     input,
     '',
     isEmail
       ? 'TASK: Polish this email. Fix punctuation and grammar. Remove any closing signature. Make it sound like someone who has their stuff together. Keep his directness — lead with the point. Do not add filler. Do not make it longer.'
-      : 'TASK: Defuse this text. Keep his voice exactly. Only remove the shrapnel that could blow up on him. Minimal changes.',
+      : 'TASK: Defuse this text. Keep his voice exactly. Watch especially for one-word replies, flat shutdowns, and endings that could read as sarcastic. Minimal changes — only remove the shrapnel.',
     '',
     'BANNED PHRASES — never use: "I hope this finds you well", "I wanted to reach out", "please do not hesitate", "I appreciate your patience", "as per my last email", "circling back", "going forward", "touch base", "per our conversation", "just checking in", "as discussed", "I am writing to", "kindly"',
     '',
@@ -615,7 +704,7 @@ function clearAll() {
   document.getElementById('recipientInput').value = '';
   document.getElementById('contextInput').value = '';
   document.getElementById('output').innerHTML = '';
-  document.getElementById('wordCount').textContent = '0 words';
+  const _wc = document.getElementById('wordCount'); if(_wc) _wc.textContent = '0 words';
   document.getElementById('inputText').style.height = 'auto';
   lastRewrite = '';
   window.scrollTo(0, 0);
