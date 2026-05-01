@@ -251,6 +251,78 @@ textarea:focus { border-color: var(--accent); }
 .coaching-body strong { color: var(--text); font-weight: 500; }
 
 /* ACTIONS */
+/* Nudge modal */
+.nudge-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  align-items: flex-end;
+  justify-content: center;
+}
+.nudge-overlay.show { display: flex; }
+.nudge-sheet {
+  background: var(--surface);
+  border-radius: 16px 16px 0 0;
+  padding: 24px 20px 36px;
+  width: 100%;
+  max-width: 480px;
+}
+.nudge-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.nudge-sub {
+  font-size: 0.75rem;
+  color: var(--dim);
+  margin-bottom: 16px;
+}
+.nudge-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.nudge-opt {
+  padding: 8px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.nudge-opt.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a0f00;
+}
+.nudge-apply {
+  width: 100%;
+  padding: 13px;
+  background: var(--accent);
+  color: #1a0f00;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.nudge-cancel {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
 .action-row {
   display: flex;
   gap: 8px;
@@ -384,12 +456,23 @@ textarea:focus { border-color: var(--accent); }
       </div>
 
       <div class="action-row">
-        <button class="action-btn" onclick="nudgeTone('less')">− Less</button>
-        <button class="action-btn" onclick="nudgeTone('more')">+ More</button>
+        <button class="action-btn" onclick="openNudgeModal('less')">− Less</button>
+        <button class="action-btn" onclick="openNudgeModal('more')">+ More</button>
         <button class="action-btn" onclick="doRewrite()">↻ Retry</button>
         <button class="action-btn" onclick="clearAll()">✕ Clear</button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- NUDGE MODAL -->
+  <div class="nudge-overlay" id="nudgeOverlay">
+    <div class="nudge-sheet">
+      <div class="nudge-title" id="nudgeTitle">What needs fixing?</div>
+      <div class="nudge-sub">Select all that apply</div>
+      <div class="nudge-options" id="nudgeOptions"></div>
+      <button class="nudge-apply" onclick="applyNudge()">Apply</button>
+      <button class="nudge-cancel" onclick="closeNudge()">Cancel</button>
     </div>
   </div>
 
@@ -611,22 +694,39 @@ async function doRewrite() {
     input,
     '',
     isEmail
-      ? `TASK: Rewrite this email. GOAL: protect the relationship AND still make the point. RULES IN ORDER:
-(1) BLAME — replace "you did X wrong" with impact language: "this left me in a tough spot" / "this created a real problem". Never attack character, only describe impact.
-(2) ABSOLUTES — remove "always" and "never" — replace with specific instances: "when this happens" not "you never do this".
-(3) DEFENSIVE DEFLECTIONS — if Jake is defending himself, add a brief acknowledgment first before the defense: "I hear you — and here is what I meant."
-(4) GRAMMAR — fix punctuation and grammar after the above. Do not use this as the main fix.
-(5) LENGTH — do NOT make it longer. Shorter is better. Do not pad to seem warmer.
-(6) GOAL — Jake should never "win" in the rewrite. The goal is to defuse, not to build a stronger case. Reframe around fixing the situation, not proving a point.
-BANNED: corporate tone, therapist language, excessive apology, making Jake sound weak or like he is backing down.`
-      : `TASK: Defuse this text. GOAL: protect the relationship AND still make the point. RULES IN ORDER:
-(1) BLAME — replace attacking words with impact language: "that left me in a tough spot" not "you dropped the ball". Never attack character.
-(2) ABSOLUTES — remove "always" and "never" — replace with specific: "when this happens" not "you never do this".
-(3) SHUTDOWNS — one-word replies like "No" and flat closers like "Got it. Won't do it again." read as cold or sarcastic. Add just enough to signal you are still engaged: "No — here is what I meant" or "Understood, I will make sure that does not happen."
-(4) FLOODING RESPONSES — if the message sounds like Jake hit his limit ("I'm done", "can't be fixed", "not made for this world"), rewrite as a space request: "I need some time to process this. Can we talk later?"
-(5) DEFENSIVE DEFLECTIONS — if Jake is defending himself, acknowledge first: "I hear you — I did not mean it that way."
-(6) LENGTH — minimal changes. Do not pad. Do not make it sound like a therapy session.
-(7) GOAL — defuse, not win. Reframe around fixing the situation.`,
+      ? `TASK: Rewrite this email. The ONLY goal is to protect the relationship while still communicating the need.
+
+WHAT THIS MEANS IN PRACTICE:
+- "You really messed up" → "I want to make sure we get this right" (describe what you need, not what they did wrong)
+- "You didn't follow through" → "The follow-through on this fell short" (situational, not personal)
+- "We're going to have issues" → "I want to get ahead of this before it becomes a bigger problem" (forward-looking, not threatening)
+- "You need to fix this" → "Can we figure out how to address this together?" (collaborative, not commanding)
+
+HARD RULES:
+- Never keep phrasing that sounds like a threat or ultimatum even in clean language
+- Remove ALL "you messed up / you failed / you dropped the ball" language — reframe as the situation, never the person
+- Remove "always" and "never" — replace with specific instances
+- Do not make it longer — shorter and warmer beats longer and formal
+- Do not make Jake sound weak or like he is backing down — he can still be firm about the SITUATION
+- Goal is to open a conversation, not win an argument`
+      : `TASK: Defuse this text. The ONLY goal is to protect the relationship while still communicating the need.
+
+WHAT THIS MEANS IN PRACTICE:
+- "You dropped the ball" → "this one got away from us" (shared, not blamed)
+- "You never read the scope" → "when the scope gets missed, it costs us" (situational)
+- "Got it. Won't do it again." → "Got it, I hear you. I will be more aware of that." (adds warmth signal)
+- "I'm done / can't be fixed" → "I need some space right now. Can we talk later?" (flooding response → space request)
+- "I said nothing wrong" → "I hear you. I did not mean it that way — I want to work on how it lands." (acknowledge before defending)
+- One-word "No" → "No — and here is why" (stays firm, not dismissive)
+
+HARD RULES:
+- Aggressive or frustrated messages need the MOST rewriting, not the least — the angrier the original, the more the AI should soften
+- Never keep any phrasing that sounds like an attack, threat, or ultimatum even in clean language
+- Remove ALL character attacks — reframe as situation/impact only
+- Remove "always" and "never"
+- Do NOT pad with extra sentences — warmer word choices beat longer messages
+- Goal is to open a conversation, not win an argument
+- Jake can still be firm about the SITUATION while being warm about the PERSON`,
     '',
     'BANNED PHRASES — never use: "I hope this finds you well", "I wanted to reach out", "please do not hesitate", "I appreciate your patience", "as per my last email", "circling back", "going forward", "touch base", "per our conversation", "just checking in", "as discussed", "I am writing to", "kindly"',
     '',
@@ -675,23 +775,121 @@ BANNED: corporate tone, therapist language, excessive apology, making Jake sound
   setLoading(false);
 }
 
-function nudgeTone(direction) {
+let nudgeDirection = 'less';
+let nudgeSelected = [];
+
+const nudgeChoicesLess = [
+  { id: 'too_changed', label: 'Changed too much' },
+  { id: 'too_formal', label: 'Too formal' },
+  { id: 'too_warm', label: 'Too warm' },
+  { id: 'lost_voice', label: 'Lost my voice' },
+  { id: 'too_long', label: 'Too long' },
+  { id: 'too_soft', label: 'Too soft' },
+];
+
+const nudgeChoicesMore = [
+  { id: 'still_harsh', label: 'Still too harsh' },
+  { id: 'still_direct', label: 'Still too direct' },
+  { id: 'more_warm', label: 'More warmth' },
+  { id: 'less_formal', label: 'Less formal' },
+  { id: 'more_casual', label: 'More casual' },
+  { id: 'soften_blame', label: 'Soften the blame' },
+  { id: 'add_acknowledgment', label: 'Add acknowledgment' },
+];
+
+function openNudgeModal(direction) {
+  nudgeDirection = direction;
+  nudgeSelected = [];
+  const choices = direction === 'less' ? nudgeChoicesLess : nudgeChoicesMore;
+  document.getElementById('nudgeTitle').textContent = direction === 'less' ? '− Less: what to fix?' : '+ More: what to fix?';
+  const opts = document.getElementById('nudgeOptions');
+  opts.innerHTML = choices.map(c => `
+    <button class="nudge-opt" id="opt_${c.id}" onclick="toggleNudgeOpt('${c.id}')">${c.label}</button>
+  `).join('');
+  document.getElementById('nudgeOverlay').classList.add('show');
+}
+
+function toggleNudgeOpt(id) {
+  const btn = document.getElementById('opt_' + id);
+  if (nudgeSelected.includes(id)) {
+    nudgeSelected = nudgeSelected.filter(x => x !== id);
+    btn.classList.remove('selected');
+  } else {
+    nudgeSelected.push(id);
+    btn.classList.add('selected');
+  }
+}
+
+function closeNudge() {
+  document.getElementById('nudgeOverlay').classList.remove('show');
+}
+
+function applyNudge() {
+  closeNudge();
+  nudgeTone(nudgeDirection, nudgeSelected);
+}
+
+function nudgeTone(direction, focusIds = []) {
   const current = document.getElementById('resultBody').textContent;
   if (!current) return;
   const input = document.getElementById('inputText').value.trim();
   const recipient = document.getElementById('recipientInput').value.trim();
+
+  const focusLabels = {
+    too_changed: 'it changed too much from the original',
+    too_formal: 'it is too formal',
+    too_warm: 'it is too warm',
+    lost_voice: 'it lost Jake voice',
+    too_long: 'it is too long',
+    too_soft: 'it is too soft',
+    still_harsh: 'it is still too harsh',
+    still_direct: 'it is still too direct',
+    more_warm: 'it needs more warmth',
+    less_formal: 'it needs to be less formal',
+    more_casual: 'it needs to be more casual',
+    soften_blame: 'the blame language needs softening',
+    add_acknowledgment: 'it needs acknowledgment of the other person feelings',
+  };
+  const focusNotes = focusIds.length > 0
+    ? 'The user says: ' + focusIds.map(id => focusLabels[id] || id).join(', ') + '. Fix these specifically.'
+    : '';
+
   const nudgePrompt = direction === 'less'
-    ? 'The rewrite below is still too warm or formal. Dial it back — keep it closer to the original voice, less softening, more direct.'
-    : 'The rewrite below needs to be warmer and softer. More acknowledgment, more human, still sounds like Jake but gentler.';
+    ? `You are adjusting a message rewrite. Pull it back closer to the original voice.
+${focusNotes}
+
+LESS correction rules:
+- Keep Jake original sentence structure as much as possible
+- Only fix words that would truly damage the relationship
+- Do not add warmth that was not in the original
+- Shorter and more direct is fine
+- Still fix character attacks or always/never absolutes
+
+Original: ${input}
+Current rewrite: ${current}
+Recipient: ${recipient || 'not specified'}
+
+Return JSON: { rewritten, changes: [{icon: "↩", title: "Pulled back", description: "Kept closer to original voice"}], coaching: "Less correction applied." }`
+    : `You are adjusting a message rewrite. Make it warmer and more relationship-focused.
+${focusNotes}
+
+MORE correction rules:
+- Lead with acknowledgment before making the point
+- Replace remaining blunt phrasing with warmer alternatives
+- If aggressive, significantly rewrite it — relationship matters more than original words
+- Keep it sounding like Jake — not a therapist, not corporate
+
+Original: ${input}
+Current rewrite: ${current}
+Recipient: ${recipient || 'not specified'}
+
+Return JSON: { rewritten, changes: [{icon: "🌡️", title: "Warmed up", description: "Pushed toward warmer tone"}], coaching: "More correction applied." }`;
 
   setLoading(true);
   fetch('/api/rewrite', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      prompt: nudgePrompt + '\n\nOriginal message: ' + input + '\n\nCurrent rewrite: ' + current + '\n\nRecipient: ' + (recipient || 'not specified') + '\n\nReturn JSON: { rewritten, changes: [], coaching: "" }',
-      apiKey: apiKey
-    })
+    body: JSON.stringify({ prompt: nudgePrompt, apiKey: apiKey })
   })
   .then(r => r.json())
   .then(data => {
