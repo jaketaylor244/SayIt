@@ -611,9 +611,7 @@ function autoExpandTextarea(textarea) {
 }
 
 function updateWordCount() {
-  const text = document.getElementById('inputText').value.trim();
-  const words = text ? text.split(/\s+/).length : 0;
-  const _wc = document.getElementById('wordCount'); if(_wc) _wc.textContent = words + ' word' + (words !== 1 ? 's' : '');
+  // word count display removed — element not present
 }
 
 function clearDraft() {
@@ -621,7 +619,6 @@ function clearDraft() {
   document.getElementById('recipientInput').value = '';
   document.getElementById('contextInput').value = '';
   document.getElementById('output').innerHTML = '';
-  const _wc = document.getElementById('wordCount'); if(_wc) _wc.textContent = '0 words';
   const ta = document.getElementById('inputText');
   ta.style.height = 'auto';
   lastRewrite = '';
@@ -650,9 +647,14 @@ async function doRewrite() {
   const input = document.getElementById('inputText').value.trim();
   if (!input) { document.getElementById('inputText').focus(); return; }
 
+  const wordCount = input.trim().split(/\s+/).length;
+  if (wordCount > 800) {
+    const go = confirm('This message is ' + wordCount + ' words — very long. Consider splitting it for best results. Continue anyway?');
+    if (!go) return;
+  }
+
   const recipient = document.getElementById('recipientInput').value.trim();
   const isEmail = mode === 'email';
-  const wordCount = input.trim().split(/\s+/).length;
 
   setLoading(true);
   document.getElementById('output').classList.remove('show');
@@ -673,23 +675,40 @@ async function doRewrite() {
     'CHECK: Before finalizing rewrite, verify the first word is not just a bare name.',
     '',
     'ABOUT JAKE (the person whose messages you are editing):',
-    'Jake is a painting estimator and project coordinator. Direct, efficient, genuinely cares but his brain moves faster than he can type so messages come out stripped down. He is not cold — he is fast. Does not do small talk. Gets to the point. Natural style: short sentences, sometimes fragments, warm but not bubbly. Says things like "all good", "brother", "thank you sir", uses "!" when he means it.',
+    'Jake is a painting estimator and project coordinator. Direct, efficient, genuinely cares but his brain moves faster than he can type so messages come out stripped down. He is not cold — he is fast. Does not do small talk. Gets to the point.',
+    'JAKE REAL VOICE EXAMPLES — rewrites must sound like these, not cleaner or more formal:',
+    'Warm/casual: "Yes, absolutely — thank you for that." / "That is amazing!!!" / "Thank you for telling me, I love that." / "Oh gosh! How close are you guys?" / "Dang that is quick! You ready?" / "No problem dude we will make it look good." / "You made my whole day! Thank you for taking the time."',
+    'With friends: "Miss you cole" / "It was man. I wish it wasnt over. How are you?" / "lol seriously? I would have never guessed" / "Thanks dude! I really appreciate that. I will give you a free copy when you get set up!" / "Sounds good, well do as much as we can" / "How is your house coming?"',
+    'Explaining himself (self-aware, not defensive): "I may have done it wrong. I wasnt trying to, it was forcing me. I will figure it out later." / "I am so dyslexic I couldnt remember the numbers lol." / "Its okay dad lol."',
+    'Being firm but not cold: "I cannot answer that. I do not want you there if your heart is not in the right place." / "Then I will not push you if that is how you feel. I will be honest with you." / "Thank you. I just wanted to be straightforward. I am not hiding anything." / "I am not tricking you. I need to know and understand you in order for us to fix anything."',
+    'With Kate in hard moments (these landed well): "I can see why you are hurt, and I am really sorry. Hearing it all laid out like that, I get how it feels like I was giving my time and energy to other people and not really considering you." / "I also want to apologize for how I talked about your family and the wedding. I should have chosen better words, and that is on me." / "I care about you, and I do not want you feeling like you come second. I want to be better about checking in and making sure we are on the same page." / "I do have ownership too. My ownership is my insensitivity and defensiveness. It was not good when I met you and affected our marriage. I have been working really hard on it." / "I am not perfect. I am deeply flawed. But because I can communicate well it appears like I have it together. I do not." / "I appreciate you doing that. I do not want you to burn out. If it is too much we do not have to. I want to do what is best for you."',
+    'Kate pattern: Acknowledge her feelings first, own your part specifically, explain your perspective as context not excuse, end with what you want for the relationship. Never defend before validating.',
+    'Kate casual voice (when things are good — do NOT over-correct these): "Yes!!!!!" / "I was about to buy another one" / "I got the medical records / Finally" / "I am so tired..." / "I have been with Chase for like 17 years or more" — short, light, a little dry, warm without trying. When the message is casual and not a conflict, keep the rewrite light and close to the original.',
+    'Key voice patterns: uses lol naturally, uses ! when genuinely excited not as filler, says dude/man/bro with male friends, says babe with Kate, short sentences that feel complete, jumps to the point with warmth baked in, self-deprecating about his own mistakes, asks follow-up questions to show care.',
+    'NOT Jake: "I wanted to reach out" / "I hope this finds you well" / "I appreciate your patience" / "I understand your frustration" / "moving forward" / "touch base" / "circle back" / overly formal anything. Never use these.',
     '',"JAKE KEY PATTERN: When frustrated and right, messages get shorter and flatter. Watch for one-word replies, flat shutdowns, sarcasm-adjacent endings. Fix without making Jake sound weak.",,
     '',
     'PEOPLE JAKE MESSAGES (use this for context when recipient matches):',
-    "Marvin — Project manager. Consistently doesn't read scope of work, poor job management, gets defensive when confronted. Conversations get heated. Jake needs to be firm but not escalating.",
-    'Matt — Concrete coating manager. Similar to Marvin. Same communication problems.',
-    "Ismael — Waterproofing PM. Horrible communication and follow-through. Jake's main frustration is lack of accountability.",
+    "Marvin — Project manager. Does not read scope of work, poor job management, gets defensive when confronted. Conversations get heated. Jake needs to be firm but not escalating.",
+    "MARVIN WINS (messages that worked and kept the relationship functional):",
+    "When Marvin is struggling: 'We have to get you two more guys' / 'It is not up to me Marvin I am sorry but they are coming' / 'I am talking with Mallory' / 'I need you to call me now please' / 'Can you buy the guys lunch?' — firm, solution-focused, not personal",
+    "When things are good with Marvin: 'How did I do?' / 'Will do! Thanks Marvin!' / 'lol no to the room NEXT to the gym the small attic room — we can ask him if he does not want it and refund him the money lol' — light, collaborative, humor when tension is low",
+    "When Marvin pushes back on scope: 'Hey Marvin, Gary just called me and said the exercise room has not been started. The room to the center of the upstairs hallway, not the yellow room. Are you planning to do that in the end?' — clear, specific, no accusation",
+    "Key Marvin pattern: Jake stays solution-focused not blame-focused. Gives Marvin a way forward. Uses humor to reset when things are tense. Calls instead of texting when it is getting complicated.",
+    "Matt — Concrete coating manager. Same disorganization as Ismael — over-promises, under-delivers, forgets things. But unlike Ismael, Matt does the bare minimum and is not a hard worker. However he is great with company culture and a very nice person. Tone with Matt: firm about the specific issue, do not attack his character since he is genuinely likeable. Keep it short and solution-focused. He responds better to clear asks than lectures.",
+    "Ismael — Waterproofing PM. Over-promises and under-delivers. Forgets things. Disorganized. But hard worker, goes above and beyond, loves his job, true craftsman in the wrong role. Jake frustration is the gap between his effort and execution.",
+    "ISMAEL VOICE EXAMPLES (messages that worked): 'Hey buddy, Cynthia Alco on the job you just finished the stuccoing for is pushing out the painting. How long do you think she can push it before the stucco becomes vulnerable to cracking?' / 'If it is easy you can just text but if not you can call. I start my meeting at 10 and will not be free after.' / 'You left me hanging today bro... What happened?' / 'But why did you not tell me or tell them? I needed you man. We should have rescheduled. I did awful — he asked so many questions I did not know.' / 'This is Alice, Ismael, did your stucco come through for us?' / 'Ismael this is time sensitive. We have less than 4 weeks to complete. What is the status?' / 'Okay can we get that scheduled.' / 'Oh thank you!' / 'Thanks for such a timely response brother!' / 'Perfect. Thanks.'",
+    "Ismael tone pattern: Uses 'buddy', 'bro', 'brother' — keeps it warm even when frustrated. Calls out the miss directly but not coldly: 'You left me hanging bro' not 'you failed me'. Asks what happened before assuming. Gives him easy outs — text or call, your choice. Acknowledges when he does well. Stays solution-focused.",
     'Sarah — Tech manager. Rough communicator, nobody likes working with her. Keep messages professional and short.',
     "Brian — GM. Jake's boss (alongside his dad). Keep it professional and clear.",
     'Mallory — CSR rep. Friendly working relationship.',
-    'Servando — CSR rep. Friendly working relationship.',
+    "Servando — CSR rep, similar role to Mallory. Huge talker, disorganized, does not get tasks done in a timely manner. But great with tech, huge heart, feelings are not easily hurt. Tone with Servando: direct is fine since he is not sensitive. Keep it short because he will talk forever if given the chance. Be specific about what needs to get done and by when. No need to soften much — he can handle directness.",
     'Leslie — Residential scheduling manager. Keep it professional.',
     "Dad — Jake's father and the boss. Complicated dynamic. Keep it respectful but direct.",
     'Brother — Sales rep. Good relationship but occasional conflict. Keep it natural.',
-    "Katelyn — Jake's wife. Emotionally expressive, processes feelings out loud, needs acknowledgment before solutions. When Jake shuts down or goes flat in texts she reads it as not caring. Watch for nihilistic shutdowns (\"I'm done\", \"can't be fixed\"), cold acknowledgments (\"Thanks for apologizing\"), and defensive deflections (\"That's my voice\"). Soften without making Jake sound like he's collapsing or agreeing to things he doesn't mean.",
-    getPeopleContext(recipient) ? 'Additional notes on ' + recipient + ': ' + getPeopleContext(recipient) : '',
-    '',
+    "Katelyn — Jake wife. Emotionally expressive, processes out loud, needs to feel heard before anything else. When hurt she leads with feelings — acknowledge first, explain second, never defend first.",
+    'WHAT WORKS WITH KATELYN (from real messages she responded well to): Lead with I can see why you are hurt or I hear you BEFORE any explanation. Own your part specifically not vaguely — I should have checked in with you, that is on me. Explain your side AFTER hers and frame as context not excuse. End with what you want for the relationship: I care about you and do not want you feeling like you come second. When she is overwhelmed: I do not want you to burn out, I want what is best for you. When she asks for ownership: give it fully — My ownership is my insensitivity and defensiveness, I have been working on it. When defending: acknowledge first then explain — I am not perfect, I am deeply flawed, but because I communicate well it appears like I have it together, I do not.',
+    'WHAT DOES NOT WORK WITH KATELYN: flat one-liners, defending before listening, shutting down without validating first.',    '',
     'MODE: ' + (isEmail
       ? 'EMAIL — fix all punctuation, grammar, capitalization. Make it polished and confident. Remove any sign-off or signature at the end. Add one brief human touch only if it fits naturally. Professional but still clearly Jake — not corporate, not stiff.'
       : 'TEXT — light touch only. Preserve his casual voice, punctuation, and capitalization. Only fix what could land wrong or escalate a situation.'),
@@ -701,23 +720,31 @@ async function doRewrite() {
     input,
     '',
     isEmail
-      ? `TASK: Rewrite this email. Goal: warm enough to keep the relationship open, firm enough to make the point.
+      ? `TASK: Rewrite this email in Jake's voice. Goal: warm, direct, forward-moving.
 
-WARMTH BASELINE: Feel collaborative — two people solving a problem, not one calling out the other.
+JAKE REAL EMAIL EXAMPLES — match this style exactly:
+- "Hi Kevin, yes the Garage should have been Guest House. I have made that adjustment. Your proposal should reflect accordingly. The garage is already connected to the home exterior. It is included in this price."
+- "Hey Stu! Thanks, great to hear. We will still reinforce the cover and use plywood to not step on the openings. As far as the addons you can feel free to add before accepting. Whenever you are ready feel free to press accept and I look forward to working with you! Let me know if you need anything else."
+- "Hey Clint! I am sorry to hear that. Ya we can call it even. Do you want to do that?"
+- "Hey John, thanks for the explanation! I understand and I hope the project turns out amazing and we cannot wait to paint your house."
+- "You are welcome! That should have been updated already. Not sure what happened. Sorry about that. You are all set!"
+- "Perfect. We meet on Tuesday. Can I tell you then?"
 
-EXAMPLES:
-- "Brian, you messed up" becomes "Hi Brian, this one needs attention — can we sync up on what happened?"
-- "You did not follow through" becomes "Hi Brian, the follow-through fell short here. Can we talk through it?"
-- "The client is pissed" becomes "The client is frustrated and I want to handle this right"
+EMAIL VOICE PATTERNS:
+- "Hi [name]" for formal clients, "Hey [name]!" for warmer or existing relationships
+- Gets to the point in sentence 1 — no preamble
+- Acknowledges briefly, then moves to resolution
+- Owns mistakes cleanly and moves on: "Not sure what happened. Sorry about that. You are all set."
+- Ends with next step or offer to help — forward momentum
+- Short paragraphs, 1-3 sentences each
+- Never signs off — no Best regards, Sincerely, Thanks in advance
 
 HARD RULES:
-- GREETING FIRST: Never start with bare name. Use "Hi [name]" for email. Check this before finalizing.
+- GREETING FIRST: Never start with bare name. Use Hi or Hey + name.
 - No character attacks — situation and impact only
-- No threats or ultimatums even in clean language
-- No "always" or "never" — use specific instances
+- No threats or ultimatums
 - SHORT — match or beat original length. No padding.
-- Jake stays firm about the SITUATION, warm about the PERSON
-- Goal: open a conversation, not win an argument`
+- Goal: resolve cleanly or open a conversation, not win an argument`
       : `TASK: Defuse this text. Goal: warm enough to keep the relationship open, firm enough to make the point.
 
 WARMTH BASELINE: Default should feel like Jake still cares even when frustrated. Collaborative, not combative.
@@ -982,7 +1009,6 @@ function clearAll() {
   document.getElementById('recipientInput').value = '';
   document.getElementById('contextInput').value = '';
   document.getElementById('output').innerHTML = '';
-  const _wc = document.getElementById('wordCount'); if(_wc) _wc.textContent = '0 words';
   document.getElementById('inputText').style.height = 'auto';
   lastRewrite = '';
   window.scrollTo(0, 0);
