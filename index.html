@@ -10,12 +10,12 @@ html, body { touch-action: pan-y; overscroll-behavior: none; }
 
 :root {
   --bg: #111110;
-  --surface: #1a1918;
-  --surface2: #222120;
-  --border: #2e2c2a;
-  --text: #e2dbd2;
-  --muted: #6b6259;
-  --dim: #3a3530;
+  --surface: #1e1c1a;
+  --surface2: #272422;
+  --border: #4a4540;
+  --text: #f0ebe2;
+  --muted: #9a8f82;
+  --dim: #6b6259;
   --accent: #e8a96a;
   --green: #6dba8f;
   --red: #c97070;
@@ -95,7 +95,7 @@ textarea {
   transition: border-color 0.15s;
   -webkit-appearance: none;
 }
-textarea::placeholder { color: var(--dim); }
+textarea::placeholder { color: var(--muted); }
 textarea:focus { border-color: var(--accent); }
 
 .context-input {
@@ -111,7 +111,7 @@ textarea:focus { border-color: var(--accent); }
   transition: border-color 0.15s;
   -webkit-appearance: none;
 }
-.context-input::placeholder { color: var(--dim); }
+.context-input::placeholder { color: var(--muted); }
 .context-input:focus { border-color: var(--accent); }
 
 /* SAYIT BUTTON */
@@ -907,7 +907,14 @@ Return JSON: { rewritten, changes: [{icon: "🌡️", title: "Warmed up", descri
     setLoading(false);
     const text = data.content?.map(b => b.text || '').join('') || '';
     const clean = text.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
+    let parsed;
+    try {
+      parsed = JSON.parse(clean);
+    } catch(e) {
+      // If JSON parse fails, show raw text as rewritten
+      parsed = { rewritten: clean, changes: [], coaching: '' };
+    }
+    if (!parsed.rewritten) parsed.rewritten = clean;
     showOutput(parsed);
   })
   .catch(err => {
@@ -937,7 +944,15 @@ function showOutput(parsed) {
 
   const coaching = document.getElementById('coachingBody');
   if (parsed.coaching) {
-    const lines = parsed.coaching.trim().split(/\n+/).filter(l => l.trim());
+    // Handle coaching as string or object
+    let coachingText = '';
+    if (typeof parsed.coaching === 'string') {
+      coachingText = parsed.coaching;
+    } else if (typeof parsed.coaching === 'object') {
+      const c = parsed.coaching;
+      coachingText = [c.pattern || c.what || '', c.lands || c.how || '', c.fix || c.next || ''].filter(Boolean).join('\n');
+    }
+    const lines = coachingText.trim().split(/\n+/).filter(l => l.trim());
     const labels = ['🔍 What you did', '💥 How it lands', '✓ Next time'];
     coaching.innerHTML = lines.slice(0, 3).map((line, i) => `
       <div style="margin-bottom:${i < 2 ? '10px' : '0'}">
