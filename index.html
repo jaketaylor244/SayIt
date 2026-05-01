@@ -665,6 +665,13 @@ async function doRewrite() {
     : 'Standard rewrite — defuse the bluntness without overdoing it. Keep it real.';
 
   const prompt = [
+    'GREETING RULE — THIS MUST BE APPLIED FIRST, NO EXCEPTIONS:',
+    'NEVER start the rewrite with just a bare name like "Brian," or "Marvin," — this is cold and confrontational.',
+    'CORRECT greeting behavior: if original starts with just a name → use "Hey [name]" for text, "Hi [name]" for email.',
+    'If original already has "Hey [name]" → keep it. If it has "Hi [name]" → keep it.',
+    'EXAMPLE: "Brian, you did not follow scope" → rewrite starts with "Hey Brian," not "Brian,"',
+    'CHECK: Before finalizing rewrite, verify the first word is not just a bare name.',
+    '',
     'ABOUT JAKE (the person whose messages you are editing):',
     'Jake is a painting estimator and project coordinator. Direct, efficient, genuinely cares but his brain moves faster than he can type so messages come out stripped down. He is not cold — he is fast. Does not do small talk. Gets to the point. Natural style: short sentences, sometimes fragments, warm but not bubbly. Says things like "all good", "brother", "thank you sir", uses "!" when he means it.',
     '',"JAKE KEY PATTERN: When frustrated and right, messages get shorter and flatter. Watch for one-word replies, flat shutdowns, sarcasm-adjacent endings. Fix without making Jake sound weak.",,
@@ -694,42 +701,43 @@ async function doRewrite() {
     input,
     '',
     isEmail
-      ? `TASK: Rewrite this email. The ONLY goal is to protect the relationship while still communicating the need.
+      ? `TASK: Rewrite this email. Goal: warm enough to keep the relationship open, firm enough to make the point.
 
-WHAT THIS MEANS IN PRACTICE:
-- "You really messed up" → "I want to make sure we get this right" (describe what you need, not what they did wrong)
-- "You didn't follow through" → "The follow-through on this fell short" (situational, not personal)
-- "We're going to have issues" → "I want to get ahead of this before it becomes a bigger problem" (forward-looking, not threatening)
-- "You need to fix this" → "Can we figure out how to address this together?" (collaborative, not commanding)
+WARMTH BASELINE: Feel collaborative — two people solving a problem, not one calling out the other.
 
-HARD RULES:
-- Never keep phrasing that sounds like a threat or ultimatum even in clean language
-- Remove ALL "you messed up / you failed / you dropped the ball" language — reframe as the situation, never the person
-- Remove "always" and "never" — replace with specific instances
-- Keep it SHORT — long messages feel like lectures. Match or beat the original length. Never add sentences just to seem warmer.
-- Do not make Jake sound weak or like he is backing down — he can still be firm about the SITUATION
-- Goal is to open a conversation, not win an argument
-- GREETING RULE: Never start with just a name like "Brian," — cold and confrontational. If the original has a greeting, keep that style. If it starts with just a name, use "Hi [name]" — email is slightly more professional.`
-      : `TASK: Defuse this text. The ONLY goal is to protect the relationship while still communicating the need.
-
-WHAT THIS MEANS IN PRACTICE:
-- "You dropped the ball" → "this one got away from us" (shared, not blamed)
-- "You never read the scope" → "when the scope gets missed, it costs us" (situational)
-- "Got it. Won't do it again." → "Got it, I hear you. I will be more aware of that." (adds warmth signal)
-- "I'm done / can't be fixed" → "I need some space right now. Can we talk later?" (flooding response → space request)
-- "I said nothing wrong" → "I hear you. I did not mean it that way — I want to work on how it lands." (acknowledge before defending)
-- One-word "No" → "No — and here is why" (stays firm, not dismissive)
+EXAMPLES:
+- "Brian, you messed up" becomes "Hi Brian, this one needs attention — can we sync up on what happened?"
+- "You did not follow through" becomes "Hi Brian, the follow-through fell short here. Can we talk through it?"
+- "The client is pissed" becomes "The client is frustrated and I want to handle this right"
 
 HARD RULES:
-- Aggressive or frustrated messages need the MOST rewriting, not the least — the angrier the original, the more the AI should soften
-- Never keep any phrasing that sounds like an attack, threat, or ultimatum even in clean language
-- Remove ALL character attacks — reframe as situation/impact only
-- Remove "always" and "never"
-- Keep it SHORT — match or beat the original length. Warmer word choices beat longer messages. Never add sentences just to seem warmer.
-- Goal is to open a conversation, not win an argument
-- Jake can still be firm about the SITUATION while being warm about the PERSON
-- GREETING RULE: Never start with just a name like "Brian," — cold and confrontational. If the original has a greeting, keep that style. If it starts with just a name, use "Hi [name]" — email is slightly more professional.`,
-    '',
+- GREETING FIRST: Never start with bare name. Use "Hi [name]" for email. Check this before finalizing.
+- No character attacks — situation and impact only
+- No threats or ultimatums even in clean language
+- No "always" or "never" — use specific instances
+- SHORT — match or beat original length. No padding.
+- Jake stays firm about the SITUATION, warm about the PERSON
+- Goal: open a conversation, not win an argument`
+      : `TASK: Defuse this text. Goal: warm enough to keep the relationship open, firm enough to make the point.
+
+WARMTH BASELINE: Default should feel like Jake still cares even when frustrated. Collaborative, not combative.
+
+EXAMPLES:
+- "Brian, you dropped the ball" becomes "Hey Brian, this one got away from us — can we figure it out?"
+- "You never read scope" becomes "Hey Marvin, when scope gets missed it costs us — can we get aligned?"
+- "Got it. Won't do it again." becomes "Got it. I will make sure that does not happen again."
+- "I'm done / can't be fixed" becomes "I need some space right now. Can we talk later?"
+- "I said nothing wrong" becomes "I hear you — I did not mean it that way"
+
+HARD RULES:
+- GREETING FIRST: Never start with bare name. Use "Hey [name]" for text. Check this before finalizing.
+- Aggressive messages need the MOST rewriting — angrier original means warmer fix needed
+- No character attacks — situation and impact only
+- No threats or ultimatums
+- No "always" or "never"
+- SHORT — 1-3 sentences max. Warmer words, not longer messages.
+- Goal: open a conversation, not win an argument`,
+        '',
     'BANNED PHRASES — never use: "I hope this finds you well", "I wanted to reach out", "please do not hesitate", "I appreciate your patience", "as per my last email", "circling back", "going forward", "touch base", "per our conversation", "just checking in", "as discussed", "I am writing to", "kindly"',
     '',
     'Return a JSON object with exactly these keys:',
@@ -876,10 +884,11 @@ Return JSON: { rewritten, changes: [{icon: "↩", title: "Pulled back", descript
 ${focusNotes}
 
 MORE correction rules:
-- Lead with acknowledgment before making the point
+- Lead with a brief acknowledgment before making the point
 - Replace remaining blunt phrasing with warmer alternatives
-- If aggressive, significantly rewrite it — relationship matters more than original words
-- Keep it sounding like Jake — not a therapist, not corporate
+- If aggressive, significantly rewrite — relationship matters more than original words
+- CEILING: Still sounds like Jake. No "I understand your frustration", no "let's grab coffee", no corporate empathy language. Jake is warm but direct — not a therapist.
+- Max 2-3 sentences. Do not pad.
 
 Original: ${input}
 Current rewrite: ${current}
