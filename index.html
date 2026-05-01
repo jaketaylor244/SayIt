@@ -341,7 +341,7 @@ textarea:focus { border-color: var(--accent); }
 <body>
 <div class="container">
 
-  <div class="wordmark">Say<span>It</span></div>
+  <div class="wordmark" onclick="clearDraft()" style="cursor:pointer">Say<span>It</span></div>
 
   <div class="nav">
     <button class="nav-btn active" onclick="switchTab('write', this)">Write</button>
@@ -410,6 +410,7 @@ textarea:focus { border-color: var(--accent); }
         <strong style="color:var(--text)">How it works:</strong><br>
         Your key stays on your phone. Only used to call the API. You control spending limits in your Anthropic console.
       </div>
+      <button onclick="clearHistory()" style="padding:12px;background:transparent;border:1px solid #c97070;color:#c97070;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.9rem">Erase All History</button>
     </div>
   </div>
 
@@ -469,8 +470,22 @@ function updateWordCount() {
 function clearDraft() {
   document.getElementById('messageInput').value = '';
   document.getElementById('recipientInput').value = '';
+  document.getElementById('contextInput').value = '';
   document.getElementById('output').innerHTML = '';
+  document.getElementById('wordCount').textContent = '0 words';
+  const ta = document.getElementById('messageInput');
+  ta.style.height = 'auto';
   lastRewrite = '';
+  window.scrollTo(0, 0);
+}
+
+function clearHistory() {
+  if (confirm('Erase all history?')) {
+    history = [];
+    try { localStorage.removeItem('sayit_history'); } catch(e) {}
+    renderHistory();
+    alert('History cleared.');
+  }
 }
 
 function switchTab(name, btn) {
